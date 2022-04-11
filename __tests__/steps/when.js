@@ -173,6 +173,13 @@ const a_user_calls_getMyProfile = async (user) => {
   const getMyProfile = `query getMyProfile {
     getMyProfile {
       ... myProfileFields
+
+      tweets {
+        nextToken
+        tweets {
+          ... iTweetFields
+        }
+      }
     }
   }`
 
@@ -188,6 +195,13 @@ const a_user_calls_editMyProfile = async (user, input) => {
   const editMyProfile = `mutation editMyProfile($input: ProfileInput!) {
     editMyProfile(newProfile: $input) {
       ... myProfileFields
+
+      tweets {
+        nextToken
+        tweets {
+          ... iTweetFields
+        }
+      }
     }
   }`
   const variables = {
