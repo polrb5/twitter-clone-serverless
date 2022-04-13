@@ -4,16 +4,16 @@ const then = require('../../steps/then')
 const chance = require('chance').Chance()
 
 describe('Given an authenticated user', () => {
-    let user
+    let userA
     beforeAll(async () => {
-        user = await given.an_authenticated_user()
+        userA = await given.an_authenticated_user()
     })
 
     describe('When he send a tweet', () => {
         let tweet
         const text = chance.string({ length: 16 })
         beforeAll(async () => {
-            tweet = await when.a_user_calls_tweet(user, text)
+            tweet = await when.a_user_calls_tweet(userA, text)
         })
 
         it('should return the new tweet', () => {
@@ -29,7 +29,7 @@ describe('Given an authenticated user', () => {
         describe('When he calls getTweets', () => {
             let tweets, nextToken
             beforeAll(async () => {
-              const result = await when.a_user_calls_getTweets(user, user.username, 25)
+              const result = await when.a_user_calls_getTweets(userA, userA.username, 25)
               tweets = result.tweets
               nextToken = result.nextToken
             })
@@ -41,7 +41,7 @@ describe('Given an authenticated user', () => {
             })
             
             it('He cannot ask for more than 25 tweets in a page', async () => {
-                await expect(when.a_user_calls_getTweets(user, user.username, 26)).rejects.toMatchObject({
+                await expect(when.a_user_calls_getTweets(userA, userA.username, 26)).rejects.toMatchObject({
                   message: expect.stringContaining('max limit is 25')
                 })
             })
@@ -49,7 +49,7 @@ describe('Given an authenticated user', () => {
         describe('When he calls getTimeline', () => {
             let tweets, nextToken
             beforeAll(async () => {
-              const result = await when.a_user_calls_getMyTimeline(user, 25)
+              const result = await when.a_user_calls_getMyTimeline(userA, 25)
               tweets = result.tweets
               nextToken = result.nextToken
             })
@@ -61,18 +61,18 @@ describe('Given an authenticated user', () => {
             })
 
             it('He cannot ask for more than 25 tweets in a page', async () => {
-                await expect(when.a_user_calls_getMyTimeline(user, 26)).rejects.toMatchObject({
+                await expect(when.a_user_calls_getMyTimeline(userA, 26)).rejects.toMatchObject({
                   message: expect.stringContaining('max limit is 25')
                 })
             })
         })
         describe('When he likes the tweet', () => {
           beforeAll(async () => {
-            await when.a_user_calls_like(user, tweet.id)
+            await when.a_user_calls_like(userA, tweet.id)
           })
 
           it('Should see Tweet.liked as true', async () => {
-            const { tweets } = await when.a_user_calls_getMyTimeline(user, 25)
+            const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
     
             expect(tweets).toHaveLength(1)
             expect(tweets[0].id).toEqual(tweet.id)
@@ -80,13 +80,13 @@ describe('Given an authenticated user', () => {
           })
 
           it('Should not be able to like the same tweet a second time', async () => {
-            await expect(() => when.a_user_calls_like(user, tweet.id)).rejects.toMatchObject({
+            await expect(() => when.a_user_calls_like(userA, tweet.id)).rejects.toMatchObject({
               message: expect.stringContaining('DynamoDB transaction error')
             })
           })
 
           it('Should see this tweet when he calls getLikes', async () => {
-            const { tweets, nextToken } = await when.a_user_calls_getLike(user, user.username, 25)
+            const { tweets, nextToken } = await when.a_user_calls_getLike(userA, userA.username, 25)
 
             expect(nextToken).toBeNull()
             expect(tweets).toHaveLength(1)
@@ -103,11 +103,11 @@ describe('Given an authenticated user', () => {
 
           describe('When he unlikes the tweet', () => {
             beforeAll(async () => {
-              await when.a_user_calls_unlike(user, tweet.id)
+              await when.a_user_calls_unlike(userA, tweet.id)
             })
 
             it('Should see Tweet.liked as false', async () => {
-              const { tweets } = await when.a_user_calls_getMyTimeline(user, 25)
+              const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
     
               expect(tweets).toHaveLength(1)
               expect(tweets[0].id).toEqual(tweet.id)
@@ -115,19 +115,119 @@ describe('Given an authenticated user', () => {
             })
 
             it('Should not be able to unlike the same tweet a second time', async () => {
-              await expect(() => when.a_user_calls_unlike(user, tweet.id)).rejects.toMatchObject({
+              await expect(() => when.a_user_calls_unlike(userA, tweet.id)).rejects.toMatchObject({
                 message: expect.stringContaining('DynamoDB transaction error')
               })
             })
 
             it('Should not see this tweet when he calls getLikes anymore', async () => {
-              const { tweets, nextToken } = await when.a_user_calls_getLike(user, user.username, 25)
+              const { tweets, nextToken } = await when.a_user_calls_getLike(userA, userA.username, 25)
 
               expect(nextToken).toBeNull()
               expect(tweets).toHaveLength(0)
             })
 
           })
+        })
+
+        describe('When he retweets the tweet', () => {
+          beforeAll(async () => {
+            await when.a_user_calls_retweet(userA, tweet.id)
+          })
+
+          it('Should see the retweet when he calls getTweets', async () => {
+            const { tweets } = await when.a_user_calls_getTweets(userA, userA.username, 25)
+    
+            expect(tweets).toHaveLength(2)
+            expect(tweets[0]).toMatchObject({
+              profile: {
+                id: userA.username,
+                tweetsCount: 2
+              },
+              retweetOf: {
+                ...tweet,
+                retweets: 1,
+                retweeted: true,
+                profile: {
+                  id: userA.username,
+                  tweetsCount: 2
+                }
+              }
+            })
+            expect(tweets[1]).toMatchObject({
+              ...tweet,
+              retweets: 1,
+              retweeted: true,
+              profile: {
+                id: userA.username,
+                tweetsCount: 2
+              }
+            })
+          })
+
+          it('Should not see the retweet when he calls getMyTimeline', async () => {
+            const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
+    
+            expect(tweets).toHaveLength(1)
+            expect(tweets[0]).toMatchObject({
+              ...tweet,
+              retweets: 1,
+              retweeted: true,
+              profile: {
+                id: userA.username,
+                tweetsCount: 2
+              }
+            })
+          })
+        })
+
+        describe('Given another user, user B, sends a tweet', () => {
+          let userB, anotherTweet
+          const text = chance.string({ length: 16 })
+          beforeAll(async () => {
+            userB = await given.an_authenticated_user()
+            anotherTweet = await when.a_user_calls_tweet(userB, text)
+          })
+
+          describe("When user A retweets user B's tweet", () => {
+            beforeAll(async () => {
+              await when.a_user_calls_retweet(userA, anotherTweet.id)
+            })
+    
+            it('Should see the retweet when he calls getTweets', async () => {
+              const { tweets } = await when.a_user_calls_getTweets(userA, userA.username, 25)
+      
+              expect(tweets).toHaveLength(3)
+              expect(tweets[0]).toMatchObject({
+                profile: {
+                  id: userA.username,
+                  tweetsCount: 3
+                },
+                retweetOf: {
+                  ...anotherTweet,
+                  retweets: 1,
+                  retweeted: true,
+                }
+              })
+            })
+      
+            it('Should see the retweet when he calls getMyTimeline', async () => {
+              const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
+      
+              expect(tweets).toHaveLength(2)
+              expect(tweets[0]).toMatchObject({
+                profile: {
+                  id: userA.username,
+                  tweetsCount: 3
+                },
+                retweetOf: {
+                  ...anotherTweet,
+                  retweets: 1,
+                  retweeted: true
+                }
+              })
+            })          
+          })          
         })
     })
 })
