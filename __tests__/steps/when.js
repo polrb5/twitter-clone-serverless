@@ -436,6 +436,22 @@ const a_user_calls_retweet = async (user, tweetId) => {
   return result
 }
 
+const a_user_calls_unretweet = async (user, tweetId) => {
+  const unretweet = `mutation unretweet($tweetId: ID!) {
+    unretweet(tweetId: $tweetId)
+  }`
+  const variables = {
+    tweetId
+  }
+
+  const data = await GraphQL(process.env.API_URL, unretweet, variables, user.accessToken)
+  const result = data.unretweet
+
+  console.log(`[${user.username}] - unretweeted tweet [${tweetId}]`)
+
+  return result
+}
+
 module.exports = {
   we_invoke_confirmUserSignup,
   we_invoke_getImageUploadUrl,
@@ -449,6 +465,7 @@ module.exports = {
   a_user_calls_getImageUploadUrl,
   a_user_calls_tweet,
   a_user_calls_retweet,
+  a_user_calls_unretweet,
   a_user_calls_getTweets,
   a_user_calls_getMyTimeline,
   a_user_calls_like,
