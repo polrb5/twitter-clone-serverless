@@ -27,18 +27,18 @@ describe('UnhydratedTweetsPage.tweets.request template', () => {
     const result = when.we_invoke_an_appsync_template(templatePath, context)
 
     expect(result).toEqual({
-        "version" : "2018-05-29",
-        "operation" : "BatchGetItem",
-        "tables" : {
-          "${TweetsTable}": {
-            "keys": [{
-              "id": {
-                "S": tweetId
-              }
-            }],
-            "consistentRead": false
-          }
+      "version" : "2018-05-29",
+      "operation" : "BatchGetItem",
+      "tables" : {
+        "${TweetsTable}": {
+          "keys": [{
+            "id": {
+              "S": tweetId
+            }
+          }],
+          "consistentRead": false
         }
+      }
     })
   })
 })

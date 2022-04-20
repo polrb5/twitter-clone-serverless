@@ -20,26 +20,21 @@ const user_exists_in_UsersTable = async (id) => {
   return resp.Item
 }
 
-const user_can_upload_image_to_url = async (url, filepath, contentType) => {
-  const data = fs.readFileSync(filepath)
-  await http({
-    method: 'put',
-    url,
-    headers: {
-      'Content-Type': contentType
-    },
-    data
-  })
+const tweetsCount_is_updated_in_UsersTable = async (id, newCount) => {
+  const DynamoDB = new AWS.DynamoDB.DocumentClient()
 
-  console.log('uploaded image to', url)
-}
+  console.log(`looking for user [${id}] in table [${process.env.USERS_TABLE}]`)
+  const resp = await DynamoDB.get({
+    TableName: process.env.USERS_TABLE,
+    Key: {
+      id
+    }
+  }).promise()
 
-const user_can_download_image_from = async (url) => {
-  const resp = await http(url)
+  expect(resp.Item).toBeTruthy()
+  expect(resp.Item.tweetsCount).toEqual(newCount)
 
-  console.log('downloaded image from', url)
-
-  return resp.data
+  return resp.Item
 }
 
 const tweet_exists_in_TweetsTable = async (id) => {
@@ -56,6 +51,28 @@ const tweet_exists_in_TweetsTable = async (id) => {
   expect(resp.Item).toBeTruthy()
 
   return resp.Item
+}
+
+const reply_exists_in_TweetsTable = async (userId, tweetId) => {
+  const DynamoDB = new AWS.DynamoDB.DocumentClient()
+
+  console.log(`looking for reply by [${userId}] to [${tweetId}] in table [${process.env.TWEETS_TABLE}]`)
+  const resp = await DynamoDB.query({
+    TableName: process.env.TWEETS_TABLE,
+    IndexName: 'repliesForTweet',
+    KeyConditionExpression: 'inReplyToTweetId = :tweetId',
+    ExpressionAttributeValues: {
+      ':userId': userId,
+      ':tweetId': tweetId
+    },
+    FilterExpression: 'creator = :userId'
+  }).promise()
+
+  const reply = _.get(resp, 'Items.0')
+
+  expect(reply).toBeTruthy()
+
+  return reply
 }
 
 const retweet_exists_in_TweetsTable = async (userId, tweetId) => {
@@ -78,28 +95,6 @@ const retweet_exists_in_TweetsTable = async (userId, tweetId) => {
   expect(retweet).toBeTruthy()
 
   return retweet
-}
-
-const reply_exists_in_TweetsTable = async (userId, tweetId) => {
-  const DynamoDB = new AWS.DynamoDB.DocumentClient()
-
-  console.log(`looking for reply by ${userId} to [${tweetId}] in table [${process.env.TWEETS_TABLE}]`)
-  const resp = await DynamoDB.query({
-    TableName: process.env.TWEETS_TABLE,
-    IndexName: 'repliesForTweet',
-    KeyConditionExpression: 'inReplyToTweetId = :tweetId',
-    ExpressionAttributeValues: {
-      ':userId': userId,
-      ':tweetId': tweetId
-    },
-    FilterExpression: 'creator = :userId'
-  }).promise()
-
-  const reply = _.get(resp, 'Items.0')
-
-  expect(reply).toBeTruthy()
-
-  return reply
 }
 
 const retweet_does_not_exist_in_TweetsTable = async (userId, tweetId) => {
@@ -191,34 +186,39 @@ const there_are_N_tweets_in_TimelinesTable = async (userId, n) => {
   return resp.Items
 }
 
-const tweetsCount_is_updated_in_UsersTable = async (id, newCount) => {
-  const DynamoDB = new AWS.DynamoDB.DocumentClient()
+const user_can_upload_image_to_url = async (url, filepath, contentType) => {
+  const data = fs.readFileSync(filepath)
+  await http({
+    method: 'put',
+    url,
+    headers: {
+      'Content-Type': contentType
+    },
+    data
+  })
 
-  console.log(`looking for user [${id}] in table [${process.env.USERS_TABLE}]`)
-  const resp = await DynamoDB.get({
-    TableName: process.env.USERS_TABLE,
-    Key: {
-      id
-    }
-  }).promise()
+  console.log('uploaded image to', url)
+}
 
-  expect(resp.Item).toBeTruthy()
-  expect(resp.Item.tweetsCount).toEqual(newCount)
+const user_can_download_image_from = async (url) => {
+  const resp = await http(url)
 
-  return resp.Item
+  console.log('downloaded image from', url)
+
+  return resp.data
 }
 
 module.exports = {
   user_exists_in_UsersTable,
-  user_can_upload_image_to_url,
-  user_can_download_image_from,
+  tweetsCount_is_updated_in_UsersTable,
   tweet_exists_in_TweetsTable,
   tweet_exists_in_TimelinesTable,
+  reply_exists_in_TweetsTable,
   retweet_exists_in_TweetsTable,
   retweet_does_not_exist_in_TweetsTable,
-  reply_exists_in_TweetsTable,
   retweet_exists_in_RetweetsTable,
   retweet_does_not_exist_in_RetweetsTable,
   there_are_N_tweets_in_TimelinesTable,
-  tweetsCount_is_updated_in_UsersTable
+  user_can_upload_image_to_url,
+  user_can_download_image_from
 }

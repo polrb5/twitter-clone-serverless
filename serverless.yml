@@ -75,27 +75,6 @@ functions:
       USERS_TABLE: !Ref UsersTable
       TWEETS_TABLE: !Ref TweetsTable
       TIMELINES_TABLE: !Ref TimelinesTable
-    iamRoleStatements:
-      - Effect: Allow
-        Action: dynamodb:GetItem
-        Resource: !GetAtt TweetsTable.Arn
-      - Effect: Allow
-        Action: dynamodb:UpdateItem
-        Resource: 
-          - !GetAtt TweetsTable.Arn
-          - !GetAtt UsersTable.Arn
-      - Effect: Allow
-        Action: dynamodb:PutItem
-        Resource:
-          - !GetAtt TweetsTable.Arn
-          - !GetAtt TimelinesTable.Arn
-
-  reply:
-    handler: functions/reply.handler
-    environment:
-      USERS_TABLE: !Ref UsersTable
-      TWEETS_TABLE: !Ref TweetsTable
-      TIMELINES_TABLE: !Ref TimelinesTable
       RETWEETS_TABLE: !Ref RetweetsTable
     iamRoleStatements:
       - Effect: Allow
@@ -112,6 +91,27 @@ functions:
           - !GetAtt TweetsTable.Arn
           - !GetAtt TimelinesTable.Arn
           - !GetAtt RetweetsTable.Arn
+
+  reply:
+    handler: functions/reply.handler
+    environment:
+      USERS_TABLE: !Ref UsersTable
+      TWEETS_TABLE: !Ref TweetsTable
+      TIMELINES_TABLE: !Ref TimelinesTable
+    iamRoleStatements:
+      - Effect: Allow
+        Action: dynamodb:GetItem
+        Resource: !GetAtt TweetsTable.Arn
+      - Effect: Allow
+        Action: dynamodb:UpdateItem
+        Resource: 
+          - !GetAtt TweetsTable.Arn
+          - !GetAtt UsersTable.Arn
+      - Effect: Allow
+        Action: dynamodb:PutItem
+        Resource:
+          - !GetAtt TweetsTable.Arn
+          - !GetAtt TimelinesTable.Arn
 
   unretweet:
     handler: functions/unretweet.handler
@@ -203,7 +203,7 @@ resources:
             Value: ${self:custom.stage}
           - Key: Name
             Value: tweets-table
-    
+
     TimelinesTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -219,31 +219,31 @@ resources:
           - AttributeName: tweetId
             AttributeType: S
         Tags:
-          - Key: Enviroment
+          - Key: Environment
             Value: ${self:custom.stage}
           - Key: Name
-            Value: timelines-table            
-    
+            Value: timelines-table
+
     LikesTable:
       Type: AWS::DynamoDB::Table
       Properties:
         BillingMode: PAY_PER_REQUEST
         KeySchema:
           - AttributeName: userId
-            KeyType: HASH        
+            KeyType: HASH
           - AttributeName: tweetId
-            KeyType: RANGE        
+            KeyType: RANGE
         AttributeDefinitions:
           - AttributeName: userId
-            AttributeType: S      
+            AttributeType: S
           - AttributeName: tweetId
-            AttributeType: S        
+            AttributeType: S
         Tags:
-          - Key: Enviroment
+          - Key: Environment
             Value: ${self:custom.stage}
           - Key: Name
             Value: likes-table
-   
+
     RetweetsTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -263,7 +263,7 @@ resources:
             Value: ${self:custom.stage}
           - Key: Name
             Value: retweets-table
-
+            
     CognitoUserPool:
       Type: AWS::Cognito::UserPool
       Properties:

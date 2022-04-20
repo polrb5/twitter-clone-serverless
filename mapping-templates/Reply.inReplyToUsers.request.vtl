@@ -3,25 +3,23 @@
 #end
 
 #set ($users = [])
-
 #if ($context.info.selectionSetList.size() == 1 && $context.info.selectionSetList[0] == "id")
   #foreach ($id in $context.source.inReplyToUserIds)
-    #set ($user = { "id" : "$id" })
+    #set ($user = { "id": "$id" })
 
     #if ($id == $context.identity.username)
-        #set ($user["__typename"] = "MyProfile")
+      #set ($user["__typename"] = "MyProfile")
     #else
-        #set ($user["__typename"] = "OtherProfile")
+      #set ($user["__typename"] = "OtherProfile")
     #end
 
     $util.qr($users.add($user))
 
-  #end
-  
+  #end 
   
   #return($users)
 
-#else
+#else 
   #foreach ($id in $context.source.inReplyToUserIds)
     #set ($user = {})
     #set ($user.id = $id)

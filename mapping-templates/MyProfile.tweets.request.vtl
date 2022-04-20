@@ -4,12 +4,12 @@
   "query" : {
     "expression" : "creator = :userId",
     "expressionValues" : {
-      ":userId" : $util.dynamodb.toDynamoDBJson($context.source.id),
+      ":userId" : $util.dynamodb.toDynamoDBJson($context.source.id)
     }
   },
   "index" : "byCreator",
   "limit" : $util.toJson(10),
   "scanIndexForward" : false,
   "consistentRead" : false,
-  "select" : "ALL_ATTRIBUTES",
+  "select" : "ALL_ATTRIBUTES"
 }
