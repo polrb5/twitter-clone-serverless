@@ -50,6 +50,4 @@ describe('Given authenticated users, user A and B', () => {
       expect(followedBy).toBe(true)
     })
   })
-
-
 })
