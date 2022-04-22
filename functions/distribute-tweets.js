@@ -8,11 +8,11 @@ const { RELATIONSHIPS_TABLE, TIMELINES_TABLE } = process.env
 module.exports.handler = async (event) => {
   for (const record of event.Records) {
     if (record.eventName === 'INSERT') {
-      const tweet = DynamoDB.Converter.unmarshall(record.DynamoDB.NewImage)
+      const tweet = DynamoDB.Converter.unmarshall(record.dynamodb.NewImage)
       const followers = await getFollowers(tweet.creator)
       await distribute(tweet, followers)
     } else if (record.eventName === 'REMOVE') {
-      const tweet = DynamoDB.Converter.unmarshall(record.DynamoDB.OldImage)
+      const tweet = DynamoDB.Converter.unmarshall(record.dynamodb.OldImage)
       const followers = await getFollowers(tweet.creator)
       await undistribute(tweet, followers)
     }
@@ -51,6 +51,7 @@ async function distribute(tweet, followers) {
         userId,
         tweetId: tweet.id,
         timestamp: tweet.createdAt,
+        distributedFrom: tweet.creator,
         retweetOf: tweet.retweetOf,
         inReplyToTweetId: tweet.inReplyToTweetId,
         inReplyToUserIds: tweet.inReplyToUserIds
@@ -60,7 +61,7 @@ async function distribute(tweet, followers) {
 
   const chunks = _.chunk(timelineEntries, Constants.DynamoDB.MAX_BATCH_SIZE)
 
-  const promises = chunks.map(chunk => {
+  const promises = chunks.map(async chunk => {
     await DocumentClient.batchWrite({
       RequestItems: {
         [TIMELINES_TABLE]: chunk
@@ -76,14 +77,14 @@ async function undistribute(tweet, followers) {
     DeleteRequest: {
       Key: {
         userId,
-        tweetId: tweet.id,
+        tweetId: tweet.id
       }
     }
   }))
 
   const chunks = _.chunk(timelineEntries, Constants.DynamoDB.MAX_BATCH_SIZE)
 
-  const promises = chunks.map(chunk => {
+  const promises = chunks.map(async chunk => {
     await DocumentClient.batchWrite({
       RequestItems: {
         [TIMELINES_TABLE]: chunk
