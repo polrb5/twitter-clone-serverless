@@ -9,7 +9,7 @@
       "dynamodb": {
         "ApproximateCreationDateTime": 1606055595,
         "Keys": "****",
-        "OlImage": {
+        "OldImage": {
           "createdAt": { "S": "2020-11-22T14:33:15.894Z" },
           "creator": { "S": "a0eb810f-6c2b-4b0c-a95d-d0743dc2757b" },
           "replies": { "N": "0" },
