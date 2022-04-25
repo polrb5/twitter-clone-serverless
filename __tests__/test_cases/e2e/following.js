@@ -16,7 +16,7 @@ describe('Given authenticated users, user A and B', () => {
     userBsTweet2 = await when.a_user_calls_tweet(userB, chance.paragraph())
   })
 
-  describe('When user A follows user B', () => {
+  describe("When user A follows user B", () => {
     beforeAll(async () => {
       await when.a_user_calls_follow(userA, userB.username)
     })
@@ -35,9 +35,9 @@ describe('Given authenticated users, user A and B', () => {
       expect(followedBy).toBe(true)
     })
 
-    it("Adds user B's tweets to user A's timeline", () => {
+    it("Adds user B's tweets to user A's timeline", async () => {
       retry(async () => {
-        const {tweets} = await when.a_user_calls_getMyTimeline(userA, 25)
+        const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
   
         expect(tweets).toHaveLength(2)
         expect(tweets).toEqual([
@@ -61,7 +61,7 @@ describe('Given authenticated users, user A and B', () => {
         tweet = await when.a_user_calls_tweet(userB, text)
       })
 
-      it("should appear in user A's timeline", async () => {
+      it("Should appear in user A's timeline", async () => {
         await retry(async () => {
           const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
   
@@ -75,7 +75,7 @@ describe('Given authenticated users, user A and B', () => {
     })
   })
 
-  describe('When user B follows user A back', () => {
+  describe("When user B follows user A back", () => {
     beforeAll(async () => {
       await when.a_user_calls_follow(userB, userA.username)
     })
@@ -101,7 +101,7 @@ describe('Given authenticated users, user A and B', () => {
         tweet = await when.a_user_calls_tweet(userA, text)
       })
 
-      it("should appear in user B's timeline", async () => {
+      it("Should appear in user B's timeline", async () => {
         await retry(async () => {
           const { tweets } = await when.a_user_calls_getMyTimeline(userB, 25)
   
@@ -111,6 +111,44 @@ describe('Given authenticated users, user A and B', () => {
           retries: 3,
           maxTimeout: 1000
         })
+      })
+    })
+  })
+
+  describe("When user A unfollows user B", () => {
+    beforeAll(async () => {
+      await when.a_user_calls_unfollow(userA, userB.username)
+    })
+
+    it("User A should see following as false when viewing user B's profile", async () => {
+      const { following, followedBy } = await when.a_user_calls_getProfile(userA, userBsProfile.screenName)
+
+      expect(following).toBe(false)
+      expect(followedBy).toBe(true)
+    })
+
+    it("User B should see followedBy as false when viewing user A's profile", async () => {
+      const { following, followedBy } = await when.a_user_calls_getProfile(userB, userAsProfile.screenName)
+
+      expect(following).toBe(true)
+      expect(followedBy).toBe(false)
+    })
+
+    it("Remove user B's tweets from user A's timeline", async () => {
+      retry(async () => {
+        const { tweets } = await when.a_user_calls_getMyTimeline(userA, 25)
+  
+        expect(tweets).toHaveLength(1)
+        expect(tweets).toEqual([
+          expect.objectContaining({
+            profile: {
+              id: userA.username
+            }
+          }),
+        ])
+      }, {
+        retries: 3,
+        maxTimeout: 1000
       })
     })
   })
