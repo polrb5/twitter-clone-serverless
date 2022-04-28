@@ -30,10 +30,10 @@ jobs:
     - name: install AWS CLI
       run: |
         curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
-        sudo installer -pkg AWSCLIV2.pkg -target /
-        
-        rm AWSCLIV2.pkg 
-        rm -r ./aws
+        installer -pkg AWSCLIV2.pkg \
+            -target CurrentUserHomeDirectory \
+            -applyChoiceChangesXML choices.xml
+
     - name: unit tests
       run: |
         CREDS=`aws sts assume-role --role-arn arn:aws:iam::${{ secrets.DEV_ACCOUNT_ID }}:role/ci-role --role-session-name=ci_user`
